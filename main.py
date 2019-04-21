@@ -3,61 +3,95 @@ from PIL import Image
 import glob
 import re
 import os
+import img2pdf
 
 def make_all_pdf(in_dir = '', out_dir = ''):
     #check if the given path has a \ at the end
     if in_dir[-1] != '\\':
         in_dir += '\\'
+        
+    if out_dir[-1] != '\\':
+        out_dir += '\\'
     
     #gets the path name from root of all the sub-directories and its childs in the given root directory
-    dirs = [dI for dI in glob.glob(in_dir + r"**\*", recursive=True) if os.path.isdir(dI)]
-    #add the root directroy as well
-    #dirs.append(in_dir)
+    dirs = get_all_dirs(in_dir)
 
     files_found = len(dirs)
     processed_files = 0
 
+    print("Found " + str(files_found) + " folders!")
+
     for i in dirs:
-        if make_pdf('', i, i) == True:
+        if make_pdf(i, out_dir) == True:
             processed_files += 1
             progress = round(processed_files / files_found * 100, 1)
             print(str(progress) + r"% finished...")
     
     print("Converted " + str(processed_files) + " files!")
 
+def get_all_dirs(root = ''):
+    return [dI for dI in glob.glob(root + r"**\*", recursive=True) if os.path.isdir(dI)]
 
-def make_pdf(out_name, in_dir = '', out_dir = ''):
+def get_all_images(root = ''):
+
+    if (root):
+        root += "/"
+    
+    root_list = [f for f in glob.glob(root + "**/*", recursive=True) if os.path.isdir(f) == False]
+    if len(root_list) > 0:
+        list_of_images = []
+
+        for image_file in root_list:
+            #supported file extensions are: jpg, png, gif
+            filename, file_extension = os.path.splitext(image_file)
+            if file_extension == '.jpg' or file_extension == '.png' or file_extension == '.gif':
+                list_of_images.append(image_file)
+        
+        if len(list_of_images) > 0:
+            return sort_alphanum(list_of_images)
+        
+    else:
+
+        return root_list
+
+def make_pdf(in_dir = '', out_dir = ''):
+    if (in_dir):
+        in_dir += "/"
+    
+    if (out_dir):
+        out_dir += "/"
+
     #get all the files in the given directory
     list_of_files = [f for f in glob.glob(in_dir + "**/*", recursive=True) if os.path.isdir(f) == False]
     if len(list_of_files) > 0:
         #sort the list alphanumerically
-        
-
-        if (in_dir):
-            in_dir += "/"
-        
         files_to_convert = []
+
+        pdf_name = ''
 
         for image_file in list_of_files:
             #supported file extensions are: jpg, png, gif
             filename, file_extension = os.path.splitext(image_file)
             if file_extension == '.jpg' or file_extension == '.png' or file_extension == '.gif':
+                pdf_name = filename.split('\\')[-2]
                 files_to_convert.append(image_file)
         
         if len(files_to_convert) > 0:
             
             sorted_image_list = sort_alphanum(files_to_convert)
-
+            print("Converting " + pdf_name)
             cover = Image.open(sorted_image_list[0])
             width, height = cover.size
 
             pdf = FPDF(unit = "pt", format = [width, height])
 
-            for page in sorted_image_list:
+            for current_image in sorted_image_list:
+                #add an empty page
                 pdf.add_page()
-                pdf.image(page, 0, 0)
+                #add the image with the same scale as the cover
+                pdf.image(current_image, 0, 0, width, height)
 
-            pdf.output(out_dir + out_name + ".pdf", "F")
+            pdf.output(out_dir + pdf_name + ".pdf", "F")
 
             return True
         else:
@@ -72,8 +106,9 @@ def sort_alphanum(list_to_sort):
 
 if __name__ == "__main__":
     opening_info = '''
-    this software is to convert all images into pdfs
-    so what the fuck
+    this software is to convert all folders with multiple images into multiple pdfs
+    input root directory of folders to convert
+    and then input the directory in which you want to save all those files
     '''
     
     print(opening_info)
@@ -81,4 +116,4 @@ if __name__ == "__main__":
     root_dir = input("Input root directory: ")
     save_to_dir = input("Input where to save all the PDFs: ")
 
-    make_all_pdf(root_dir, root_dir)
+    make_all_pdf(root_dir, save_to_dir)
