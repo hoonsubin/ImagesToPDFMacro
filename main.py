@@ -1,4 +1,3 @@
-from fpdf import FPDF
 from PIL import Image
 import glob
 import re
@@ -6,6 +5,9 @@ import os
 import img2pdf
 
 def make_all_pdf(in_dir = '', out_dir = ''):
+
+    error_log = []
+
     #check if the given path has a \ at the end
     if out_dir[-1] != '/':
         out_dir += '/'
@@ -18,21 +20,38 @@ def make_all_pdf(in_dir = '', out_dir = ''):
 
     print("Found " + str(files_found) + " folders!")
 
+    file = open(out_dir + "error_log.txt", "w")
+
     for i in dirs:
-        if make_pdf(i, out_dir) == True:
-            processed_files += 1
-            progress = round(processed_files / files_found * 100, 1)
-            print(str(progress) + r"% finished...")
-        else:
-            #if an error happens
+        try:
+            if make_pdf(i, out_dir) == True:
+                processed_files += 1
+                progress = round(processed_files / files_found * 100, 1)
+                print(str(progress) + r"% finished...")
+            else:
+                #if an error happens
+                continue
+        except Exception as e:
+            log = "[Error]directory: " + i + "\n" + "message: " + str(e)
+            print(log)
+            error_log.append(log)
+            file.write(log)
             continue
     
+    file.close()
     print("Converted " + str(processed_files) + " files!")
+
 
 def get_all_dirs(root_dir = ''):
     if (root_dir):
         root_dir += "/"
-    return [dir for dir in glob.glob(root_dir + "**/*", recursive=True) if os.path.isdir(os.path.join(root_dir, dir)) == True]
+    
+    dirs = [dir for dir in glob.glob(root_dir + "**/*", recursive=True) if os.path.isdir(os.path.join(root_dir, dir)) == True]
+
+    if len(dirs) > 0:
+        return dirs
+    else:
+        return dirs.append(root_dir)
 
 def get_all_images(root = ''):
 
@@ -57,6 +76,7 @@ def get_all_images(root = ''):
         return root_list
 
 def make_pdf(in_dir = '', out_dir = ''):
+
     if (in_dir):
         in_dir += "/"
     
@@ -67,31 +87,18 @@ def make_pdf(in_dir = '', out_dir = ''):
     list_of_files = get_all_images(in_dir)
 
     if len(list_of_files) > 0:
-        try:
+        pdf_name = list_of_files[0].split('\\')[-2]
+        #print("Converting " + pdf_name)
 
-            pdf_name = list_of_files[0].split('\\')[-2]
-            print("Converting " + pdf_name)
-
-            with open(out_dir + pdf_name + ".pdf", "wb") as f:
-                for image in list_of_files:
-                    f.write(img2pdf.convert(image))
-            '''
-            cover = Image.open(list_of_files[0])
-            width, height = cover.size
-
-            pdf = FPDF(unit = "pt", format = [width, height])
-
-            for current_image in list_of_files:
-                #add an empty page
-                pdf.add_page()
-                #add the image with the same scale as the cover
-                pdf.image(current_image, 0, 0, width, height)
-            pdf.output(out_dir + pdf_name + ".pdf", "F")
-            '''
-            return True
-        except:
-            print("Error while processing " + str(in_dir))
-            return False
+        #open a pdf file to create
+        with open(out_dir + pdf_name + ".pdf", "wb") as f:
+            #write all the iamges to the pdf
+            f.write(img2pdf.convert([i for i in list_of_files]))
+            #close the file
+            #f.close()
+        
+        #return true to say that it has been finished
+        return True
     else:
         return False
 
@@ -99,21 +106,6 @@ def sort_alphanum(list_to_sort):
     convert = lambda text: int(text) if text.isdigit() else text  
     alphanum_key = lambda key: [convert(c) for c in re.split('([0-9]+)', key)]  
     return sorted(list_to_sort, key = alphanum_key)
-
-def make_img2pdf(in_dir = '', out_dir = ''):
-    if out_dir[-1] != '/':
-        out_dir += '/'
-    
-    list_of_images = get_all_images(in_dir)
-
-    if len(list_of_images) > 0:
-        pdf_name = list_of_images[0].split('\\')[-2]
-        print("Converting " + pdf_name)
-        with open(out_dir + pdf_name + ".pdf", "wb") as f:
-            f.write(img2pdf.convert([i for i in list_of_images]))
-
-    
-    print("end")
     
 
 
@@ -130,6 +122,4 @@ if __name__ == "__main__":
     save_to_dir = input("Input where to save all the PDFs: ")
 
     make_all_pdf(root_dir, save_to_dir)
-
-    #make_img2pdf(root_dir, save_to_dir)
 
