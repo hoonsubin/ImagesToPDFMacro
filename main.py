@@ -7,11 +7,8 @@ import img2pdf
 
 def make_all_pdf(in_dir = '', out_dir = ''):
     #check if the given path has a \ at the end
-    if in_dir[-1] != '\\':
-        in_dir += '\\'
-        
-    if out_dir[-1] != '\\':
-        out_dir += '\\'
+    if out_dir[-1] != '/':
+        out_dir += '/'
     
     #gets the path name from root of all the sub-directories and its childs in the given root directory
     dirs = get_all_dirs(in_dir)
@@ -29,8 +26,10 @@ def make_all_pdf(in_dir = '', out_dir = ''):
     
     print("Converted " + str(processed_files) + " files!")
 
-def get_all_dirs(root = ''):
-    return [dI for dI in glob.glob(root + r"**\*", recursive=True) if os.path.isdir(dI)]
+def get_all_dirs(root_dir = ''):
+    if (root_dir):
+        root_dir += "/"
+    return [dir for dir in glob.glob(root_dir + "**/*", recursive=True) if os.path.isdir(os.path.join(root_dir, dir)) == True]
 
 def get_all_images(root = ''):
 
@@ -62,40 +61,26 @@ def make_pdf(in_dir = '', out_dir = ''):
         out_dir += "/"
 
     #get all the files in the given directory
-    list_of_files = [f for f in glob.glob(in_dir + "**/*", recursive=True) if os.path.isdir(f) == False]
+    list_of_files = get_all_images(in_dir)
+
     if len(list_of_files) > 0:
-        #sort the list alphanumerically
-        files_to_convert = []
-
-        pdf_name = ''
-
-        for image_file in list_of_files:
-            #supported file extensions are: jpg, png, gif
-            filename, file_extension = os.path.splitext(image_file)
-            if file_extension == '.jpg' or file_extension == '.png' or file_extension == '.gif':
-                pdf_name = filename.split('\\')[-2]
-                files_to_convert.append(image_file)
         
-        if len(files_to_convert) > 0:
-            
-            sorted_image_list = sort_alphanum(files_to_convert)
-            print("Converting " + pdf_name)
-            cover = Image.open(sorted_image_list[0])
-            width, height = cover.size
+        pdf_name = list_of_files[0].split('\\')[-2]
+        print("Converting " + pdf_name)
+        cover = Image.open(list_of_files[0])
+        width, height = cover.size
 
-            pdf = FPDF(unit = "pt", format = [width, height])
+        pdf = FPDF(unit = "pt", format = [width, height])
 
-            for current_image in sorted_image_list:
-                #add an empty page
-                pdf.add_page()
-                #add the image with the same scale as the cover
-                pdf.image(current_image, 0, 0, width, height)
+        for current_image in list_of_files:
+            #add an empty page
+            pdf.add_page()
+            #add the image with the same scale as the cover
+            pdf.image(current_image, 0, 0, width, height)
 
-            pdf.output(out_dir + pdf_name + ".pdf", "F")
+        pdf.output(out_dir + pdf_name + ".pdf", "F")
 
-            return True
-        else:
-            return False
+        return True
     else:
         return False
 
@@ -117,3 +102,4 @@ if __name__ == "__main__":
     save_to_dir = input("Input where to save all the PDFs: ")
 
     make_all_pdf(root_dir, save_to_dir)
+
