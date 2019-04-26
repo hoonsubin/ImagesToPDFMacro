@@ -1,10 +1,36 @@
+# The MIT License (MIT)
+# Copyright (c) 2019 Hoon Kim
+#
+# Permission is hereby granted, free of charge, to any person obtaining 
+# a copy of this software and associated documentation files (the "Software"), 
+# to deal in the Software without restriction, including without limitation 
+# the rights to use, copy, modify, merge, publish, distribute, sublicense, 
+# and/or sell copies of the Software, and to permit persons to whom the Software 
+# is furnished to do so, subject to the following conditions:
+# 
+# The above copyright notice and this permission notice shall be included 
+# in all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, 
+# INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR 
+# PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
+# FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT
+# OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE 
+# OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 from PIL import Image
 import glob
 import re
 import os
 import img2pdf
+import sys
 
 delimiter = '\\'
+
+opening_info = '''
+this software is to convert all folders with multiple images into multiple pdfs
+input root directory of folders to convert
+and then input the directory in which you want to save all those files
+'''
 
 def make_all_pdf(in_dir = '', out_dir = ''):
     #check if the given path has a \ at the end
@@ -33,8 +59,9 @@ def make_all_pdf(in_dir = '', out_dir = ''):
             
             #calculate how far the progress is
             processed_files += 1
-            progress = round(processed_files / files_found * 100, 1)
-            print(str(progress) + r"% finished...")
+            #progress = round(processed_files / files_found * 100, 1)
+            progress_bar(processed_files, files_found, status="converting images...")
+            #print(str(progress) + r"% finished...")
 
         except Exception as e:
             log = "[Error]directory: " + i + "\n" + "message: " + str(e) + "\n"
@@ -129,7 +156,7 @@ def make_pdf(in_dir = '', out_dir = ''):
                 pdf = img2pdf.convert(list_of_files)
                 #write all the iamges to the pdf
                 f.write(pdf)
-                print("[Debug]Saved pdf " + list_of_files[0].split('\\')[-2])
+                print("[Debug]Saved pdf " + list_of_files[0].split('\\')[-2] + "\n")
                 #return true to say that it has been finished
                 return True
 
@@ -149,12 +176,17 @@ def sort_alphanum(list_to_sort):
     alphanum_key = lambda key: [convert(c) for c in re.split('([0-9]+)', key)]  
     return sorted(list_to_sort, key = alphanum_key)
 
+def progress_bar(count, total, status=''):
+    bar_len = 60
+    filled_len = int(round(bar_len * count / float(total)))
+
+    percents = round(100.0 * count / float(total), 1)
+    bar = '#' * filled_len + '-' * (bar_len - filled_len)
+
+    sys.stdout.write('[%s] %s%s ...%s\r' % (bar, percents, '%', status))
+    sys.stdout.flush()
+
 if __name__ == "__main__":
-    opening_info = '''
-    this software is to convert all folders with multiple images into multiple pdfs
-    input root directory of folders to convert
-    and then input the directory in which you want to save all those files
-    '''
     
     print(opening_info)
 
