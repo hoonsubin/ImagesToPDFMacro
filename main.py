@@ -21,7 +21,7 @@ def make_all_pdf(in_dir = '', out_dir = ''):
     print("Found " + str(files_found) + " folders!")
 
     file = open(out_dir + "error_log.txt", "w", encoding = 'utf-8')
-
+    
     for i in dirs:
         try:
             if make_pdf(i, out_dir) == True:
@@ -58,11 +58,16 @@ def get_all_dirs(root_dir = ''):
         return dirs.append(root_dir)
 
 def get_all_images(root = ''):
-
     if root[-1] != delimiter:
         root += delimiter
     
-    root_list = [f for f in glob.glob(root + "**/*", recursive=True) if os.path.isdir(f) == False]
+    root_list = [f for f in glob.glob(root + "**/*", recursive=False) if os.path.isdir(os.path.join(f)) == False]
+    
+    root_list = []
+    # r=root, d=directories, f = files
+    for r, d, f in os.walk(root):
+        for file in f:
+                root_list.append(os.path.join(r, file))
 
     if len(root_list) > 0:
         list_of_images = []
@@ -88,14 +93,17 @@ def get_all_images(root = ''):
             return sort_alphanum(list_of_images)
         
     else:
+        print("no images found in " + root)
         return root_list
 
 def get_image_type(im_dir = ''):
-    #get the file extension of the given directory including the .
-
+    
     file_extension = os.path.splitext(im_dir)[1]
 
-    if file_extension == '.jpg' or file_extension == '.png' or file_extension == '.gif':
+    image_exts = ['.jpg', '.png', '.gif']
+
+    #check the file extension and return it if it is one of those
+    if file_extension in image_exts:
         return file_extension
     else:
         return 'na'
@@ -116,10 +124,12 @@ def make_pdf(in_dir = '', out_dir = ''):
         pdf_to_save = out_dir + list_of_files[0].split('\\')[-2] + ".pdf"
         
         #open a pdf file as a byte to add images
-        with open(bytes(pdf_to_save, 'utf-8'), "wb") as f:
+        with open(pdf_to_save, "wb") as f:
             try:
+                pdf = img2pdf.convert(list_of_files)
                 #write all the iamges to the pdf
-                f.write(bytes(img2pdf.convert([i for i in list_of_files]), 'utf-8'))
+                f.write(pdf)
+                print("[Debug]Saved pdf " + list_of_files[0].split('\\')[-2])
                 #return true to say that it has been finished
                 return True
 
@@ -152,5 +162,6 @@ if __name__ == "__main__":
     save_to_dir = input("Input where to save all the PDFs: ")
 
     make_all_pdf(root_dir, save_to_dir)
+    
 
     
