@@ -37,6 +37,8 @@ def make_all_pdf(in_dir = '', out_dir = ''):
     if out_dir[-1] != delimiter:
         out_dir += delimiter
     
+    print("Root directory: " + in_dir)
+
     #gets the path name from root of all the sub-directories and its childs in the given root directory
     dirs = get_all_dirs(in_dir)
 
@@ -50,18 +52,17 @@ def make_all_pdf(in_dir = '', out_dir = ''):
     
     for i in dirs:
         try:
+            #calculate how far the progress is
+            processed_files += 1
+
             if make_pdf(i, out_dir) == True:
                 finished_files += 1
                 
             else:
                 #if an error happens just continue on to the next folder
                 continue
-            
-            #calculate how far the progress is
-            processed_files += 1
             #progress = round(processed_files / files_found * 100, 1)
             progress_bar(processed_files, files_found, status="converting images...")
-            #print(str(progress) + r"% finished...")
 
         except Exception as e:
             log = "[Error]directory: " + i + "\n" + "message: " + str(e) + "\n"
@@ -77,7 +78,8 @@ def get_all_dirs(root_dir = ''):
         root_dir += delimiter
     
     #get the list of all the dirs and its childerens
-    dirs = [dir for dir in glob.glob(root_dir + "**/*", recursive=True) if os.path.isdir(os.path.join(root_dir, dir)) == True]
+    #error when there is a space in the dir name
+    dirs = [dir for dir in glob.glob(root_dir + "**/*", recursive=True) if os.path.isdir(dir) == True]
 
     if len(dirs) > 0:
         return dirs
@@ -88,7 +90,8 @@ def get_all_images(root = ''):
     if root[-1] != delimiter:
         root += delimiter
     
-    root_list = [f for f in glob.glob(root + "**/*", recursive=False) if os.path.isdir(os.path.join(f)) == False]
+    #error when there is a space in the dir name
+    root_list = [f for f in glob.glob(root + "**/*", recursive=False) if os.path.isdir(f) == False]
     
     root_list = []
     # r=root, d=directories, f = files
