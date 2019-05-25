@@ -26,6 +26,8 @@ import sys
 
 delimiter = '\\'
 
+supported_exts = ['.jpg', '.png', '.gif', '.jpeg']
+
 opening_info = '''
 this software is to convert all folders with multiple images into multiple pdfs
 input root directory of folders to convert
@@ -95,7 +97,7 @@ def get_all_images(root = ''):
     
     root_list = []
     # r=root, d=directories, f = files
-    for r, d, f in os.walk(root):
+    for r, _, f in os.walk(root):
         for file in f:
                 root_list.append(os.path.join(r, file))
 
@@ -106,9 +108,12 @@ def get_all_images(root = ''):
             #supported file extensions are: jpg, png, gif
             file_extension = get_image_type(image_file)
 
-            #check if the file type is correct
-            if file_extension == '.jpg' or file_extension == '.gif' or file_extension == '.png':
+            if file_extension in supported_exts:
                 list_of_images.append(image_file)
+
+            #check if the file type is correct
+            #if file_extension == '.jpg' or file_extension == '.gif' or file_extension == '.jpeg':
+            #    list_of_images.append(image_file)
 
             '''
             elif file_extension == '.png':
@@ -130,10 +135,8 @@ def get_image_type(im_dir = ''):
     
     file_extension = os.path.splitext(im_dir)[1]
 
-    image_exts = ['.jpg', '.png', '.gif']
-
     #check the file extension and return it if it is one of those
-    if file_extension in image_exts:
+    if file_extension in supported_exts:
         return file_extension
     else:
         return 'na'
