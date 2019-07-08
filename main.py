@@ -25,11 +25,9 @@ import img2pdf
 import sys
 
 delimiter = '\\'
-
-supported_exts = ['.jpg', '.png', '.gif', '.jpeg']
-
-opening_info = '''
-this software is to convert all folders with multiple images into multiple pdfs
+supported_exts: list = ['.jpg', '.png', '.gif', '.jpeg']
+opening_info ='''
+this software will convert all images in folders as pdfs, folder by folder
 input root directory of folders to convert
 and then input the directory in which you want to save all those files
 '''
@@ -70,9 +68,21 @@ def make_all_pdf(in_dir = '', out_dir = ''):
             log = "[Error]directory: " + i + "\n" + "message: " + str(e) + "\n"
             file.write(log)
             continue
+        
+        except (KeyboardInterrupt, SystemExit):
+            exit_program = str(input("wish to exit program? (yes, no)"))
+            if exit_program == "yes":
+                print("shutting down...")
+                
+            elif exit_program == "no":
+                print("continuing process")
+                continue
+            
     
     file.close()
     print("Converted " + str(finished_files) + " files!")
+    
+    exit()
 
 
 def get_all_dirs(root_dir = ''):
@@ -111,18 +121,6 @@ def get_all_images(root = ''):
             if file_extension in supported_exts:
                 list_of_images.append(image_file)
 
-            #check if the file type is correct
-            #if file_extension == '.jpg' or file_extension == '.gif' or file_extension == '.jpeg':
-            #    list_of_images.append(image_file)
-
-            '''
-            elif file_extension == '.png':
-                #get rid of alpha channel
-                image = Image.open(image_file)
-                image_rgb = image.convert('RGB')
-                image_rgb.save(image_file, "PNG")
-                list_of_images.append(image_file)
-            '''
 
         if len(list_of_images) > 0:
             return sort_alphanum(list_of_images)
@@ -159,7 +157,7 @@ def make_pdf(in_dir = '', out_dir = ''):
         #open a pdf file as a byte to add images
         with open(pdf_to_save, "wb") as f:
             try:
-                pdf = img2pdf.convert(list_of_files)
+                pdf: bytes = img2pdf.convert(list_of_files)
                 #write all the iamges to the pdf
                 f.write(pdf)
                 print("[Debug]Saved pdf " + list_of_files[0].split('\\')[-2] + "\n")
@@ -176,12 +174,13 @@ def make_pdf(in_dir = '', out_dir = ''):
     else:
         return False
         
-
+#sort the list of texts in alphanumeric order
 def sort_alphanum(list_to_sort):
     convert = lambda text: int(text) if text.isdigit() else text  
     alphanum_key = lambda key: [convert(c) for c in re.split('([0-9]+)', key)]  
     return sorted(list_to_sort, key = alphanum_key)
 
+#console progress bar
 def progress_bar(count, total, status=''):
     bar_len = 60
     filled_len = int(round(bar_len * count / float(total)))
@@ -192,6 +191,7 @@ def progress_bar(count, total, status=''):
     sys.stdout.write('[%s] %s%s ...%s\r' % (bar, percents, '%', status))
     sys.stdout.flush()
 
+#the main block
 if __name__ == "__main__":
     
     print(opening_info)
