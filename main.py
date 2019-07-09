@@ -22,6 +22,8 @@ import tools
 import os
 import img2pdf
 import sys
+import traceback
+import gc
 
 delimiter = '\\'
 supported_exts: list = ['.jpg', '.png', '.gif', '.jpeg']
@@ -80,9 +82,10 @@ def make_all_pdf(in_dir = '', out_dir = ''):
             tools.progress_bar(processed_files, files_found, status="converting images...")
 
         except Exception as e:
-            log = "[Error]directory: " + i + "\n" + "message: " + str(e) + "\n"
+            log = "[Error]directory: " + i + "\n" + str(traceback.format_exc()) + "\n"
             failed_Process.append(i.split(delimiter)[-1])
             file.write(log)
+            print(log)
             continue
         
         except (KeyboardInterrupt, SystemExit):
@@ -118,9 +121,25 @@ def make_pdf(in_dir = '', out_dir = ''):
         #assign the full directory and the name of the saved pdf
         pdf_to_save = out_dir + list_of_files[0].split(delimiter)[-2] + ".pdf"
         
-        #define the pdf file to save/write
-        f = open(pdf_to_save, "wb")
+        try:
+            #open pdf datastream in the given directory
+            f = open(pdf_to_save, "wb")
+            #define the pdf file to save/write
+            with f:
+                img2pdf.convert(list_of_files, outputstream=f)
+            
 
+        except Exception as e:
+            os.remove(pdf_to_save)
+            raise Exception(e)
+            return False
+        
+        #run the garbage collector to flush the opened output stream
+        gc.collect()
+        return True
+
+
+'''
         print("[Debug]Opened " + pdf_to_save.split(delimiter)[-1])
 
         try:
@@ -139,10 +158,11 @@ def make_pdf(in_dir = '', out_dir = ''):
             os.remove(pdf_to_save)
             print("[Error]error while processing " + pdf_to_save + "\n[Error Message]" + str(e))
             raise Exception(e)
+
         
     else:
         return False
-        
+'''        
 
 #the main block
 if __name__ == "__main__":
