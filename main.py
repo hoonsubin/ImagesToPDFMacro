@@ -18,8 +18,7 @@
 # OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE 
 # OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 from PIL import Image
-import glob
-import re
+import tools
 import os
 import img2pdf
 import sys
@@ -32,19 +31,35 @@ input root directory of folders to convert
 and then input the directory in which you want to save all those files
 '''
 
+#main function
+def main():
+    print(opening_info)
+
+    root_dir = input("Input root directory: ")
+    save_to_dir = input("Input where to save all the PDFs: ")
+
+    make_all_pdf(root_dir, save_to_dir)
+
+    exit(0)
+
 def make_all_pdf(in_dir = '', out_dir = ''):
     #check if the given path has a \ at the end
     if out_dir[-1] != delimiter:
         out_dir += delimiter
     
-    print("Root directory: " + in_dir)
+    print("Searching directory...")
 
     #gets the path name from root of all the sub-directories and its childs in the given root directory
-    dirs = get_all_dirs(in_dir)
+    #currently it cannot work with images in the root
+
+    dirs: list = tools.get_all_dirs(in_dir)
+    
 
     files_found = len(dirs)
     processed_files = 0
     finished_files = 0
+
+    failed_Process = []
 
     print("Found " + str(files_found) + " folders!")
 
@@ -62,83 +77,32 @@ def make_all_pdf(in_dir = '', out_dir = ''):
                 #if an error happens just continue on to the next folder
                 continue
             #progress = round(processed_files / files_found * 100, 1)
-            progress_bar(processed_files, files_found, status="converting images...")
+            tools.progress_bar(processed_files, files_found, status="converting images...")
 
         except Exception as e:
             log = "[Error]directory: " + i + "\n" + "message: " + str(e) + "\n"
+            failed_Process.append(i.split(delimiter)[-1])
             file.write(log)
             continue
         
         except (KeyboardInterrupt, SystemExit):
-            exit_program = str(input("wish to exit program? (yes, no)"))
-            if exit_program == "yes":
+            exit_program = input("wish to exit program? (yes, no)")
+            if exit_program == "yes" or exit_program == "y":
                 print("shutting down...")
+                exit(0)
                 
-            elif exit_program == "no":
+            elif exit_program == "no" or exit_program == "n":
                 print("continuing process")
                 continue
-            
     
+    file.write("=====================failed folders======================\n")
+
+    for i in failed_Process:
+        file.write(i + "\n")
+    file.write("Total failed files: " + str(processed_files - finished_files))
     file.close()
     print("Converted " + str(finished_files) + " files!")
     
-    exit()
-
-
-def get_all_dirs(root_dir = ''):
-    if root_dir[-1] != delimiter:
-        root_dir += delimiter
-    
-    #get the list of all the dirs and its childerens
-    #error when there is a space in the dir name
-    dirs = [dir for dir in glob.glob(root_dir + "**/*", recursive=True) if os.path.isdir(dir) == True]
-
-    if len(dirs) > 0:
-        return dirs
-    else:
-        return dirs.append(root_dir)
-
-def get_all_images(root = ''):
-    if root[-1] != delimiter:
-        root += delimiter
-    
-    #error when there is a space in the dir name
-    root_list = [f for f in glob.glob(root + "**/*", recursive=False) if os.path.isdir(f) == False]
-    
-    root_list = []
-    # r=root, d=directories, f = files
-    for r, _, f in os.walk(root):
-        for file in f:
-                root_list.append(os.path.join(r, file))
-
-    if len(root_list) > 0:
-        list_of_images = []
-
-        for image_file in root_list:
-            #supported file extensions are: jpg, png, gif
-            file_extension = get_image_type(image_file)
-
-            if file_extension in supported_exts:
-                list_of_images.append(image_file)
-
-
-        if len(list_of_images) > 0:
-            return sort_alphanum(list_of_images)
-        
-    else:
-        print("no images found in " + root)
-        return root_list
-
-def get_image_type(im_dir = ''):
-    
-    file_extension = os.path.splitext(im_dir)[1]
-
-    #check the file extension and return it if it is one of those
-    if file_extension in supported_exts:
-        return file_extension
-    else:
-        return 'na'
-
 def make_pdf(in_dir = '', out_dir = ''):
 
     if in_dir[-1] != delimiter:
@@ -147,59 +111,43 @@ def make_pdf(in_dir = '', out_dir = ''):
     if out_dir[-1] != delimiter:
         out_dir += delimiter
 
-    #get all the files in the given directory
-    list_of_files = get_all_images(in_dir)
+    #get all the image files in the given directory
+    list_of_files = tools.get_all_image_dirs(in_dir)
 
     if len(list_of_files) > 0:
         #assign the full directory and the name of the saved pdf
-        pdf_to_save = out_dir + list_of_files[0].split('\\')[-2] + ".pdf"
+        pdf_to_save = out_dir + list_of_files[0].split(delimiter)[-2] + ".pdf"
         
-        #open a pdf file as a byte to add images
-        with open(pdf_to_save, "wb") as f:
-            try:
-                pdf: bytes = img2pdf.convert(list_of_files)
-                #write all the iamges to the pdf
-                f.write(pdf)
-                print("[Debug]Saved pdf " + list_of_files[0].split('\\')[-2] + "\n")
-                #return true to say that it has been finished
-                return True
+        #define the pdf file to save/write
+        f = open(pdf_to_save, "wb")
 
-            except Exception as e:
-                #when an error happens, remove the saved pdf file, and raise the error
-                f.close()
-                os.remove(pdf_to_save)
-                print("[Error]error while processing " + pdf_to_save + "\n[Error Message]" + str(e))
-                raise Exception(e)
-    
+        print("[Debug]Opened " + pdf_to_save.split(delimiter)[-1])
+
+        try:
+            print(img2pdf.input_images(list_of_files[0]))
+            print("[Debug]Converted images to pdf")
+            #write all the iamges to the pdf
+            f.write(img2pdf.convert(list_of_files))
+            #print the successfully converted pdf file
+            print("[Debug]Saved pdf " + pdf_to_save.split(delimiter)[-1])
+            #return true to say that it has been finished
+            return True
+
+        except Exception as e:
+            #when an error happens, remove the saved pdf file, and raise the error
+            f.close()
+            os.remove(pdf_to_save)
+            print("[Error]error while processing " + pdf_to_save + "\n[Error Message]" + str(e))
+            raise Exception(e)
+        
     else:
         return False
         
-#sort the list of texts in alphanumeric order
-def sort_alphanum(list_to_sort):
-    convert = lambda text: int(text) if text.isdigit() else text  
-    alphanum_key = lambda key: [convert(c) for c in re.split('([0-9]+)', key)]  
-    return sorted(list_to_sort, key = alphanum_key)
-
-#console progress bar
-def progress_bar(count, total, status=''):
-    bar_len = 60
-    filled_len = int(round(bar_len * count / float(total)))
-
-    percents = round(100.0 * count / float(total), 1)
-    bar = '#' * filled_len + '-' * (bar_len - filled_len)
-
-    sys.stdout.write('[%s] %s%s ...%s\r' % (bar, percents, '%', status))
-    sys.stdout.flush()
 
 #the main block
 if __name__ == "__main__":
+    main()
     
-    print(opening_info)
-
-    root_dir = input("Input root directory: ")
-    save_to_dir = input("Input where to save all the PDFs: ")
-
-    make_all_pdf(root_dir, save_to_dir)
     
 
     
