@@ -81,7 +81,7 @@ def make_all_pdf(in_dir = '', out_dir = ''):
             #progress = round(processed_files / files_found * 100, 1)
             tools.progress_bar(processed_files, files_found, status="converting images...")
 
-        except Exception as e:
+        except Exception:
             log = "[Error]directory: " + i + "\n" + str(traceback.format_exc()) + "\n"
             failed_Process.append(i.split(delimiter)[-1])
             file.write(log)
@@ -132,7 +132,6 @@ def make_pdf(in_dir = '', out_dir = ''):
         except Exception as e:
             os.remove(pdf_to_save)
             raise Exception(e)
-            return False
         
         #run the garbage collector to flush the opened output stream
         gc.collect()
