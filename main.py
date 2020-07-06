@@ -61,7 +61,7 @@ def make_all_pdf(in_dir = '', out_dir = ''):
     processed_files = 0
     finished_files = 0
 
-    failed_Process = []
+    failed_process = []
 
     print("Found " + str(files_found) + " folders!")
 
@@ -83,7 +83,7 @@ def make_all_pdf(in_dir = '', out_dir = ''):
 
         except Exception:
             log = "[Error]directory: " + i + "\n" + str(traceback.format_exc()) + "\n"
-            failed_Process.append(i.split(delimiter)[-1])
+            failed_process.append(i.split(delimiter)[-1])
             file.write(log)
             print(log)
             continue
@@ -100,7 +100,7 @@ def make_all_pdf(in_dir = '', out_dir = ''):
     
     file.write("=====================failed folders======================\n")
 
-    for i in failed_Process:
+    for i in failed_process:
         file.write(i + "\n")
     file.write("Total failed files: " + str(processed_files - finished_files))
     file.close()
@@ -136,32 +136,6 @@ def make_pdf(in_dir = '', out_dir = ''):
         #run the garbage collector to flush the opened output stream
         gc.collect()
         return True
-
-
-'''
-        print("[Debug]Opened " + pdf_to_save.split(delimiter)[-1])
-
-        try:
-            print(img2pdf.input_images(list_of_files[0]))
-            print("[Debug]Converted images to pdf")
-            #write all the iamges to the pdf
-            f.write(img2pdf.convert(list_of_files))
-            #print the successfully converted pdf file
-            print("[Debug]Saved pdf " + pdf_to_save.split(delimiter)[-1])
-            #return true to say that it has been finished
-            return True
-
-        except Exception as e:
-            #when an error happens, remove the saved pdf file, and raise the error
-            f.close()
-            os.remove(pdf_to_save)
-            print("[Error]error while processing " + pdf_to_save + "\n[Error Message]" + str(e))
-            raise Exception(e)
-
-        
-    else:
-        return False
-'''        
 
 #the main block
 if __name__ == "__main__":
