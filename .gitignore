@@ -3,3 +3,4 @@ __pycache__/
 .idea/
 desktop.ini
 .DS_Store
+*.pyc
