@@ -1,6 +1,6 @@
-__pycache__/
+__pycache__
 .vscode/
-.idea/
+.idea
 desktop.ini
 .DS_Store
 *.pyc
