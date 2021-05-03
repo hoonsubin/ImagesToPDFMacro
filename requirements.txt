@@ -1,0 +1,4 @@
+# main requirements
+
+img2pdf
+Pillow
