@@ -27,13 +27,14 @@ import gc
 
 delimiter = '\\'
 supported_exts: list = ['.jpg', '.png', '.gif', '.jpeg']
-opening_info ='''
+opening_info = '''
 this software will convert all images in folders as pdfs, folder by folder
 input root directory of folders to convert
 and then input the directory in which you want to save all those files
 '''
 
-#main function
+
+# main function
 def main():
     print(opening_info)
 
@@ -44,18 +45,18 @@ def main():
 
     exit(0)
 
-def make_all_pdf(in_dir = '', out_dir = ''):
-    #check if the given path has a \ at the end
+
+def make_all_pdf(in_dir='', out_dir=''):
+    # check if the given path has a \ at the end
     if out_dir[-1] != delimiter:
         out_dir += delimiter
-    
+
     print("Searching directory...")
 
-    #gets the path name from root of all the sub-directories and its childs in the given root directory
-    #currently it cannot work with images in the root
+    # gets the path name from root of all the sub-directories and its childs in the given root directory
+    # currently it cannot work with images in the root
 
     dirs: list = tools.get_all_dirs(in_dir)
-    
 
     files_found = len(dirs)
     processed_files = 0
@@ -65,20 +66,20 @@ def make_all_pdf(in_dir = '', out_dir = ''):
 
     print("Found " + str(files_found) + " folders!")
 
-    file = open(out_dir + "error_log.txt", "w", encoding = 'utf-8')
-    
+    file = open(out_dir + "error_log.txt", "w", encoding='utf-8')
+
     for i in dirs:
         try:
-            #calculate how far the progress is
+            # calculate how far the progress is
             processed_files += 1
 
             if make_pdf(i, out_dir) == True:
                 finished_files += 1
-                
+
             else:
-                #if an error happens just continue on to the next folder
+                # if an error happens just continue on to the next folder
                 continue
-            #progress = round(processed_files / files_found * 100, 1)
+            # progress = round(processed_files / files_found * 100, 1)
             tools.progress_bar(processed_files, files_found, status="converting images...")
 
         except Exception:
@@ -87,17 +88,17 @@ def make_all_pdf(in_dir = '', out_dir = ''):
             file.write(log)
             print(log)
             continue
-        
+
         except (KeyboardInterrupt, SystemExit):
             exit_program = input("wish to exit program? (yes, no)")
             if exit_program == "yes" or exit_program == "y":
                 print("shutting down...")
                 exit(0)
-                
+
             elif exit_program == "no" or exit_program == "n":
                 print("continuing process")
                 continue
-    
+
     file.write("=====================failed folders======================\n")
 
     for i in failed_process:
@@ -105,42 +106,39 @@ def make_all_pdf(in_dir = '', out_dir = ''):
     file.write("Total failed files: " + str(processed_files - finished_files))
     file.close()
     print("Converted " + str(finished_files) + " files!")
-    
-def make_pdf(in_dir = '', out_dir = ''):
 
+
+def make_pdf(in_dir='', out_dir=''):
     if in_dir[-1] != delimiter:
         in_dir += delimiter
 
     if out_dir[-1] != delimiter:
         out_dir += delimiter
 
-    #get all the image files in the given directory
+    # get all the image files in the given directory
     list_of_files = tools.get_all_image_dirs(in_dir)
 
     if len(list_of_files) > 0:
-        #assign the full directory and the name of the saved pdf
+        # assign the full directory and the name of the saved pdf
         pdf_to_save = out_dir + list_of_files[0].split(delimiter)[-2] + ".pdf"
-        
+
         try:
-            #open pdf datastream in the given directory
+            # open pdf data stream in the given directory
             f = open(pdf_to_save, "wb")
-            #define the pdf file to save/write
+            # define the pdf file to save/write
             with f:
                 img2pdf.convert(list_of_files, outputstream=f)
-            
+
 
         except Exception as e:
             os.remove(pdf_to_save)
             raise Exception(e)
-        
-        #run the garbage collector to flush the opened output stream
+
+        # run the garbage collector to flush the opened output stream
         gc.collect()
         return True
 
-#the main block
+
+# the main block
 if __name__ == "__main__":
     main()
-    
-    
-
-    
