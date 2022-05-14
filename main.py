@@ -53,7 +53,7 @@ def make_all_pdf(in_dir='', out_dir=''):
 
     print("Searching directory...")
 
-    # gets the path name from root of all the sub-directories and its childs in the given root directory
+    # gets the path name from root of all the subdirectories and its children in the given root directory
     # currently it cannot work with images in the root
 
     dirs: list = tools.get_all_dirs(in_dir)
@@ -73,7 +73,7 @@ def make_all_pdf(in_dir='', out_dir=''):
             # calculate how far the progress is
             processed_files += 1
 
-            if make_pdf(i, out_dir) == True:
+            if make_pdf(i, out_dir):
                 finished_files += 1
 
             else:
@@ -128,7 +128,6 @@ def make_pdf(in_dir='', out_dir=''):
             # define the pdf file to save/write
             with f:
                 img2pdf.convert(list_of_files, outputstream=f)
-
 
         except Exception as e:
             os.remove(pdf_to_save)
